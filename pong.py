@@ -1,11 +1,11 @@
 import pygame
-import sys
 import math
 import random
 import time
+import sys
 
 #Initialization
-#--------------
+#-------------------
 pygame.init()
 
 #Colors
@@ -26,13 +26,14 @@ center_x = int(display_width/2)
 center_y = int(display_height/2)
 screenCenter = (center_x,center_y)
 linethickness = 10
+
 ##gameDisplay = pygame.display.set_mode((display_width,display_height))
 gameDisplay = pygame.display.set_mode((display_width,display_height),pygame.FULLSCREEN)
 pygame.display.set_caption('Space Pong')
 
 #Sounds
-PongPaddleSound = pygame.mixer.Sound("Assets\pongPaddle.wav")
-PongEdgeSound = pygame.mixer.Sound("Assets\pongEdge.wav")
+PongPaddleSound = pygame.mixer.Sound("Assets\PongPaddle.wav")
+PongEdgeSound = pygame.mixer.Sound("Assets\PongEdge.wav")
 
 pygame.mixer.music.load("Assets\Sugar.mp3")
 pygame.mixer.music.set_volume(1.0)
@@ -42,7 +43,7 @@ musicEnabled = True
 
 #Time
 clock = pygame.time.Clock()
-FPS = 300
+FPS = 250
 playtime = 0
 
 #Fonts
@@ -50,12 +51,13 @@ normalFont = 'freesansbold.ttf'
 realFont = 'Assets\MEGALOKG.TTF'
 font = realFont
 scoreText = pygame.font.Font(font,40)
+flashText =  pygame.font.Font(font,80)
 logoText = pygame.font.Font(font,100)
 buttonText = pygame.font.Font(font,25)
 
 #Game Settings
 win_score = 11
-speed = 1
+speed = 2
 ddaExploitON = False
 
 #Confirm Quit
@@ -100,6 +102,18 @@ def toggleWinScore():
         win_score = 21
     elif win_score == 21:
         win_score = 5
+
+#Flash Screen
+def FlashScreen():
+    gameDisplay.fill(black)
+    TextSurf = flashText.render('Play Hard!!', True,red)
+    TextRect = TextSurf.get_rect()
+    TextRect.center = (display_width/2,display_height/2)
+    gameDisplay.blit(TextSurf, TextRect)
+    pygame.display.flip()
+    time.sleep(2)
+        
+
 #Settings Menu
 def settingsMenu():
     lock = False
@@ -114,7 +128,8 @@ def settingsMenu():
     color = white
     changeColor = blue
     mousePos = pygame.mouse.get_pos()
-    speedState ='1X'
+    speedState ='2X'
+    time.sleep(1)
     while not backPressed:
         gameDisplay.fill(white)
         
@@ -150,9 +165,9 @@ def settingsMenu():
             color = white
         
         if musicEnabled:
-            musicState = 'On'
+            musicState = 'Hit the beat'
         else:
-            musicState = 'Off'
+            musicState = 'My ear hurts'
         TextSurf = buttonText.render('Music: %s'%(musicState), True, color)
         TextRect = TextSurf.get_rect()
         TextRect.center = (bWidth/2,bHeight/2)
@@ -220,13 +235,13 @@ def settingsMenu():
             color = white
 
         if speed == 1:
-            speedState = '1X'
+            speedState = 'Baby mode'
         elif speed == 2:
-            speedState = '2X'
+            speedState = 'I can play'
         elif speed == 4:
-            speedState = '4X'
+            speedState = 'Bring it on!'
         
-        TextSurf = buttonText.render('Speed Multiplier: %s'%(speedState), True, color)
+        TextSurf = buttonText.render('Speed: %s'%(speedState), True, color)
         TextRect = TextSurf.get_rect()
         TextRect.center = (bWidth/2,bHeight/2)
         speedXb.blit(TextSurf, TextRect)
@@ -334,12 +349,17 @@ def startMenu():
         TextRect = TextSurf.get_rect()
         TextRect.center = ((display_width/2),100)
         gameDisplay.blit(TextSurf, TextRect)
+        TextSurf = scoreText.render('AI version!',True,blue)
+        TextRect = TextSurf.get_rect()
+        TextRect.center = ((display_width/2),160)
+        gameDisplay.blit(TextSurf, TextRect)
         
         #Draw Start Button
     
         startb = pygame.Surface((bWidth,bHeight))
         pygame.draw.rect(startb,red,((0,0),(bWidth,bHeight)))
         pygame.draw.rect(startb,white,((0,0),(bWidth,bHeight)),5)
+        
         startRect = startb.get_rect()
         startRect.center = ((display_width/2),startb_posy)
         
@@ -434,7 +454,7 @@ def pauseMenu():
     lock = False
     #Paused Text
     smallText = pygame.font.Font(font,50)
-    TextSurf = smallText.render('Paused', True, green)
+    TextSurf = smallText.render('Taking a Break', True, green)
     TextRect = TextSurf.get_rect()
     TextRect.center = ((display_width/2),(50))
     gameDisplay.blit(pauseScreen,pauseScreen.get_rect())
@@ -516,9 +536,9 @@ def pauseMenu():
             color = white
         
         if musicEnabled:
-            musicState = 'On'
+            musicState = 'Hit the beat'
         else:
-            musicState = 'Off'
+            musicState = 'My ear hurts'
         TextSurf = buttonText.render('Music: %s'%(musicState), True, color)
         TextRect = TextSurf.get_rect()
         TextRect.center = (bWidth/2,bHeight/2)
@@ -583,7 +603,7 @@ def playerCreate():
     global paddle_width
     paddle_width = 10
     global paddle_height
-    paddle_height = 130
+    paddle_height = 100
 
     paddle_color = white
     
@@ -703,6 +723,32 @@ def changePos(player,x,y,y_change):
     else:
         y += y_change
         return y
+
+def changeAIPos(player,x,y):
+    awake = [True, False, False, True,True,True,False,False]
+    AIAwake = random.choice(awake)
+    mood = [-1,0,1,1,1,1,0,1,1,1,1,-1,1,1,1,1,1]
+    AIMood = random.choice(mood)
+    AIMood = 1
+    if y < 0 + linethickness:
+        return linethickness
+    elif y + paddle_height > display_height - linethickness:
+        return display_height - paddle_height - linethickness
+    else:
+        if (y + paddle_height/2 > ballY + radius) and (ballX >= display_width/2 +50):
+            y -= 0.65*speed*AIMood
+            if (y < 0 + linethickness) and AIAwake:
+                return linethickness
+            else:
+                return y
+        elif (y + paddle_height/2 < ballY + radius)  and (ballX >= display_width/2 + 50):
+            y += 0.65*speed*AIMood
+            if (y + paddle_height > display_height - linethickness) and AIAwake:
+                return display_height - paddle_height - linethickness
+            else:
+                return y
+        else:
+            return y
     
 def checkBoundaryCollision(ballDirX,ballDirY):
     if ballY <= (linethickness) or (ballY + diameter) >= (display_height - linethickness):
@@ -711,10 +757,12 @@ def checkBoundaryCollision(ballDirX,ballDirY):
     return ballDirX, ballDirY
 
 def checkPaddleCollision(x,y,ballDirX,ballDirY):    
+##    if ballX == x + paddle_width and ballDirX < 0:
     if ballX == x + paddle_width and ballDirX < 0:
         if ballY + diameter > y and ballY < y + paddle_height:
             ballDirX = ballDirX * -1
             playPaddleSound()
+##    if ballX + diameter == x and ballDirX > 0:
     if ballX + diameter == x and ballDirX > 0:
         if ballY + diameter > y and ballY < y + paddle_height: 
             ballDirX = ballDirX * -1
@@ -733,7 +781,7 @@ def checkScoreEarned():
     if (linethickness*2) > ballX and ball_dirX < 0:
         score2 += 1
         if score2 == win_score:
-            gameOver('Player 2 Won')
+            gameOver('CPU Player Won')
             
         ballX = int(display_width/2) - int(linethickness)
         ballY = int(display_height/2) - int(linethickness/2)
@@ -774,12 +822,12 @@ def drawPaddle(player,x,y):
 
 def scoreDisplay():
     global scoreText
-    resultSurf = scoreText.render('%s' %(score1), True, white)
+    resultSurf = scoreText.render('Player 1   %s' %(score1), True, white)
     resultRect = resultSurf.get_rect()
     resultRect.topright = (display_width/2 - 10, linethickness*2 +5)
     gameDisplay.blit(resultSurf, resultRect)
 
-    resultSurf = scoreText.render('%s' %(score2), True, white)
+    resultSurf = scoreText.render('%s   CPU Player' %(score2), True, white)
     resultRect = resultSurf.get_rect()
     resultRect.topleft = (display_width/2 + 10, linethickness*2 +5)
     gameDisplay.blit(resultSurf, resultRect)
@@ -796,7 +844,7 @@ def frameUpdate():
         count2 -= 1
     drawPaddle(player1,x1,y1)
     drawPaddle(player2,x2,y2)
-    clock.tick_busy_loop(FPS);
+            
     pygame.display.flip()
 
 #Main Game Loop
@@ -836,7 +884,7 @@ def gameLoop():
         processPlayerInput()
 
         y1 = changePos(player1,x1,y1,y1_change)
-        y2 = changePos(player2,x2,y2,y2_change)
+        y2 = changeAIPos(player2,x2,y2)
         
         moveBall(ball_dirX,ball_dirY)
 
@@ -846,9 +894,12 @@ def gameLoop():
         ball_dirX,ball_dirY = checkBoundaryCollision(ball_dirX,ball_dirY)
         ball_dirX,ball_dirY = checkPaddleCollision(x1,y1,ball_dirX,ball_dirY)
         ball_dirX,ball_dirY = checkPaddleCollision(x2,y2,ball_dirX,ball_dirY)
+
+        clock.tick_busy_loop(FPS)
         
         frameUpdate()
         
+#FlashScreen()
 playMusic()
 playerCreate()
 ballCreate()
